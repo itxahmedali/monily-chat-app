@@ -33,6 +33,21 @@ export default function App() {
       password: '123',
       id: '2',
     },
+    {
+      username: 'farwah',
+      password: '123',
+      id: '3',
+    },
+    {
+      username: 'azeem',
+      password: '123',
+      id: '4',
+    },
+    {
+      username: 'abuzar',
+      password: '123',
+      id: '5',
+    },
   ];
   const storeData = async value => {
     try {
@@ -51,6 +66,13 @@ export default function App() {
   const clearAsyncStorage = async () => {
     AsyncStorage.clear();
   };
+  function back(){
+    setChatComponent(false)
+  }
+  function logout(){
+    clearAsyncStorage()
+    setLoginform(true);
+  }
   function login() {
     let user = users.find(x => x.username === email && x.password === password);
     if (user) {
@@ -66,8 +88,8 @@ export default function App() {
     setChatComponent(true);
   }
   useEffect(() => {
-    // clearAsyncStorage()
     getData();
+    // clearAsyncStorage()
     socket.on('message', message => {
       setMessageList(oldValue => [...oldValue, JSON.parse(message)]);
     });
@@ -83,7 +105,8 @@ export default function App() {
   return (
     <View style={style.container}>
       {loginform == true ? (
-        <View>
+        <View style={style.loginForm}>
+          <Text style={style.loginHead}>Login</Text>
           <TextInput
             autoCorrect={false}
             style={style.LogintextInput}
@@ -97,21 +120,24 @@ export default function App() {
               setPassword(e);
             }}></TextInput>
           <TouchableOpacity style={style.loginButton} onPress={() => login()}>
-            <Text style={style.sendMessage}>Login</Text>
+            <Text style={style.Logintext}>Login</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={style.container}>
           {chatComponent == false ? (
             <View>
+              <TouchableOpacity style={style.logoutButtonBox} onPress={() => logout()}>
+                <Text style={style.LogouttextInput}>Back</Text>
+              </TouchableOpacity>
               <Text style={style.userHead}>Users</Text>
               <FlatList
                 data={users}
-                renderItem={({item}) => (
+                renderItem={({item, index}) => (
                   <TouchableOpacity onPress={() => selectUser(item.id)}>
                     {
                       item.id != loginId ? (
-                        <Text style={style.recieveMessage}>{item.username}</Text>
+                        <Text style={style.recieveMessage}> {index}. {item.username}</Text>
                       ) : <View></View>
                     }
                   </TouchableOpacity>
@@ -120,14 +146,28 @@ export default function App() {
             </View>
           ) : (
             <View style={style.container}>
+              <TouchableOpacity style={style.logoutButtonBox} onPress={() => back()}>
+                <Text style={style.LogouttextInput}>Back</Text>
+              </TouchableOpacity>
+              <View style={style.messageStart}>
               <View style={style.MessageBox}>
                 <FlatList
                   data={messageList}
-                  renderItem={({item}) => (
-                    <Text style={item.senderId == loginId && item.recieverId != loginId ? style.sendMessage : style.recieveMessage}>{item.message}</Text>
-                  )}
+                  renderItem={({item}) => {
+                    if (item.senderId == loginId && item.recieverId == selectedUser && item.senderId != selectedUser) {
+                      return <View>
+                              <Text style={ style.sendMessage}>{item.message}</Text>
+                              </View>
+                  }
+                  if(item.senderId == selectedUser && item.recieverId == loginId && item.senderId != loginId){
+                    return <View>
+                    <Text style={style.recieveMessage}>{item.message}</Text>
+                    </View>
+                  }
+                  }}
                 />
               </View>
+            </View>
               <View style={style.messageInput}>
                 <TextInput
                   autoCorrect={false}
@@ -149,11 +189,31 @@ export default function App() {
   );
 }
 const style = StyleSheet.create({
+  messageStart:{
+    marginTop:80
+  },
+  loginForm:{
+    display:"flex",
+    justifyContent:"center",
+    alignItems:"center",
+    height:"100%"
+  },
+  logoutButtonBox:{
+    position:"absolute",
+    right:10,
+    top:10
+  },
   userHead: {
     fontSize: 30,
     color: '#fff',
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: 50,
+  },
+  loginHead: {
+    fontSize: 30,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom:20
   },
   sendButtonText: {
     color: '#fff',
@@ -196,9 +256,27 @@ const style = StyleSheet.create({
     width: '100%',
     color: '#000',
     marginTop: 30,
+    width:"80%",
+    marginLeft:'auto',
+    marginRight:'auto'
+  },
+  
+  LogouttextInput: {
+    backgroundColor: '#fff',
+    color: '#000',
+    padding:10,
+  },
+  Logintext: {
+    backgroundColor: '#fff',
+    color: '#000',
+    padding:10,
+    textAlign:"center",
   },
   loginButton: {
-    backgroundColor: '#000',
-    padding: 16,
+    backgroundColor: '#fff',
+    width:"50%",
+    marginTop:30,
+    marginLeft:'auto',
+    marginRight:'auto'
   },
 });
