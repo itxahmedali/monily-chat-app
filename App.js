@@ -9,10 +9,11 @@ import {
 import React, {useEffect, useState} from 'react';
 import io from 'socket.io-client';
 import {AsyncStorage} from 'react-native';
+import Notifications from './Notifications';
 export default function App() {
   const [socket, setSocket] = useState(
-    io('https://monily-chat-server.herokuapp.com'),
-    // io('http://192.168.18.109:3000'),
+    // io('https://monily-chat-server.herokuapp.com'),
+    io('http://192.168.18.109:3000'),
   );
   const [messageList, setMessageList] = useState([]);
   const [message, setMessage] = useState();
@@ -58,7 +59,7 @@ export default function App() {
     try {
       const value = await AsyncStorage.getItem('id');
       if (value != null) {
-        setloginId(value)
+        setloginId(value);
         setLoginform(false);
       }
     } catch (error) {}
@@ -66,14 +67,15 @@ export default function App() {
   const clearAsyncStorage = async () => {
     AsyncStorage.clear();
   };
-  function back(){
-    setChatComponent(false)
+  function back() {
+    setChatComponent(false);
   }
-  function logout(){
-    clearAsyncStorage()
+  function logout() {
+    clearAsyncStorage();
     setLoginform(true);
   }
   function login() {
+    
     let user = users.find(x => x.username === email && x.password === password);
     if (user) {
       storeData(user.id);
@@ -87,6 +89,10 @@ export default function App() {
     setselectedUser(id);
     setChatComponent(true);
   }
+  const setNotification = () => {
+    // Notifications.schduleNotification(date);
+    Notifications.schduleNotification(new Date(Date.now() + 5 * 1000));
+  };
   useEffect(() => {
     getData();
     // clearAsyncStorage()
@@ -98,7 +104,11 @@ export default function App() {
     if (message == '' || message == null) {
       return;
     } else {
-      socket.emit('message', {message: message, senderId: loginId, recieverId: selectedUser});
+      socket.emit('message', {
+        message: message,
+        senderId: loginId,
+        recieverId: selectedUser,
+      });
     }
   }
 
@@ -119,7 +129,7 @@ export default function App() {
             onChangeText={e => {
               setPassword(e);
             }}></TextInput>
-          <TouchableOpacity style={style.loginButton} onPress={() => login()}>
+          <TouchableOpacity style={style.loginButton} onPress={() => [login(),setNotification()]}>
             <Text style={style.Logintext}>Login</Text>
           </TouchableOpacity>
         </View>
@@ -127,7 +137,9 @@ export default function App() {
         <View style={style.container}>
           {chatComponent == false ? (
             <View>
-              <TouchableOpacity style={style.logoutButtonBox} onPress={() => logout()}>
+              <TouchableOpacity
+                style={style.logoutButtonBox}
+                onPress={() => logout()}>
                 <Text style={style.LogouttextInput}>Back</Text>
               </TouchableOpacity>
               <Text style={style.userHead}>Users</Text>
@@ -135,39 +147,60 @@ export default function App() {
                 data={users}
                 renderItem={({item, index}) => (
                   <TouchableOpacity onPress={() => selectUser(item.id)}>
-                    {
-                      item.id != loginId ? (
-                        <Text style={style.recieveMessage}> {index}. {item.username}</Text>
-                      ) : <View></View>
-                    }
+                    {item.id != loginId ? (
+                      <Text style={style.recieveMessage}>
+                        {' '}
+                        {index}. {item.username}
+                      </Text>
+                    ) : (
+                      <View></View>
+                    )}
                   </TouchableOpacity>
                 )}
               />
             </View>
           ) : (
             <View style={style.container}>
-              <TouchableOpacity style={style.logoutButtonBox} onPress={() => back()}>
+              <TouchableOpacity
+                style={style.logoutButtonBox}
+                onPress={() => back()}>
                 <Text style={style.LogouttextInput}>Back</Text>
               </TouchableOpacity>
               <View style={style.messageStart}>
-              <View style={style.MessageBox}>
-                <FlatList
-                  data={messageList}
-                  renderItem={({item}) => {
-                    if (item.senderId == loginId && item.recieverId == selectedUser && item.senderId != selectedUser) {
-                      return <View>
-                              <Text style={ style.sendMessage}>{item.message}</Text>
-                              </View>
-                  }
-                  if(item.senderId == selectedUser && item.recieverId == loginId && item.senderId != loginId){
-                    return <View>
-                    <Text style={style.recieveMessage}>{item.message}</Text>
-                    </View>
-                  }
-                  }}
-                />
+                <View style={style.MessageBox}>
+                  <FlatList
+                    data={messageList}
+                    renderItem={({item}) => {
+                      if (
+                        item.senderId == loginId &&
+                        item.recieverId == selectedUser &&
+                        item.senderId != selectedUser
+                      ) {
+                        return (
+                          <View>
+                            <Text style={style.sendMessage}>
+                              {item.message}
+                            </Text>
+                          </View>
+                        );
+                      }
+                      if (
+                        item.senderId == selectedUser &&
+                        item.recieverId == loginId &&
+                        item.senderId != loginId
+                      ) {
+                        return (
+                          <View>
+                            <Text style={style.recieveMessage}>
+                              {item.message}
+                            </Text>
+                          </View>
+                        );
+                      }
+                    }}
+                  />
+                </View>
               </View>
-            </View>
               <View style={style.messageInput}>
                 <TextInput
                   autoCorrect={false}
@@ -189,19 +222,19 @@ export default function App() {
   );
 }
 const style = StyleSheet.create({
-  messageStart:{
-    marginTop:80
+  messageStart: {
+    marginTop: 80,
   },
-  loginForm:{
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center",
-    height:"100%"
+  loginForm: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
   },
-  logoutButtonBox:{
-    position:"absolute",
-    right:10,
-    top:10
+  logoutButtonBox: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
   },
   userHead: {
     fontSize: 30,
@@ -213,7 +246,7 @@ const style = StyleSheet.create({
     fontSize: 30,
     color: '#fff',
     textAlign: 'center',
-    marginBottom:20
+    marginBottom: 20,
   },
   sendButtonText: {
     color: '#fff',
@@ -256,27 +289,27 @@ const style = StyleSheet.create({
     width: '100%',
     color: '#000',
     marginTop: 30,
-    width:"80%",
-    marginLeft:'auto',
-    marginRight:'auto'
+    width: '80%',
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
-  
+
   LogouttextInput: {
     backgroundColor: '#fff',
     color: '#000',
-    padding:10,
+    padding: 10,
   },
   Logintext: {
     backgroundColor: '#fff',
     color: '#000',
-    padding:10,
-    textAlign:"center",
+    padding: 10,
+    textAlign: 'center',
   },
   loginButton: {
     backgroundColor: '#fff',
-    width:"50%",
-    marginTop:30,
-    marginLeft:'auto',
-    marginRight:'auto'
+    width: '50%',
+    marginTop: 30,
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
 });
