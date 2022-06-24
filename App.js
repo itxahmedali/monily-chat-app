@@ -10,11 +10,11 @@ import React, {useEffect, useState} from 'react';
 import io from 'socket.io-client';
 import {AsyncStorage} from 'react-native';
 import Notifications from './Notifications';
-import DeviceInfo from 'react-native-device-info';
 export default function App() {
   const [socket, setSocket] = useState(
     // io('https://monily-chat-server.herokuapp.com'),
-    io('http://192.168.18.109:3000'),
+    // io('http://192.168.18.109:3000'),
+    io('http://10.14.5.14:3000'),
   );
   const [messageList, setMessageList] = useState([]);
   const [message, setMessage] = useState();
@@ -27,20 +27,16 @@ export default function App() {
   useEffect(() => {
     getData();
     // clearAsyncStorage()
-    getMessages();
-  }, [loginId]);
-  function getMessages(){
     socket.on('message', message => {
       const msg = JSON.parse(message)
       if(msg.recieverId == loginId){
         setNotification(msg.message)
       }
-      setMessageList(oldValue => [...oldValue, JSON.parse(message)]);
+      if(loginId != null){
+        setMessageList(oldValue => [...oldValue, JSON.parse(message)]);
+      }
     });
-  }
-  // const getdeviceId = () => {
-  //       console.log(deviceId);
-  // };
+  }, [loginId]);
   const users = [
     {
       username: 'monily',
