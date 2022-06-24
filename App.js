@@ -10,6 +10,7 @@ import React, {useEffect, useState} from 'react';
 import io from 'socket.io-client';
 import {AsyncStorage} from 'react-native';
 import Notifications from './Notifications';
+import DeviceInfo from 'react-native-device-info';
 export default function App() {
   const [socket, setSocket] = useState(
     // io('https://monily-chat-server.herokuapp.com'),
@@ -23,6 +24,23 @@ export default function App() {
   const [selectedUser, setselectedUser] = useState();
   const [loginform, setLoginform] = useState(true);
   const [chatComponent, setChatComponent] = useState(false);
+  useEffect(() => {
+    getData();
+    // clearAsyncStorage()
+    getMessages();
+  }, [loginId]);
+  function getMessages(){
+    socket.on('message', message => {
+      const msg = JSON.parse(message)
+      if(msg.recieverId == loginId){
+        setNotification(msg.message)
+      }
+      setMessageList(oldValue => [...oldValue, JSON.parse(message)]);
+    });
+  }
+  // const getdeviceId = () => {
+  //       console.log(deviceId);
+  // };
   const users = [
     {
       username: 'monily',
@@ -86,20 +104,22 @@ export default function App() {
     }
   }
   function selectUser(id) {
+    // if(deviceId != null){
+    //   for (let index = 0; index < users.length; index++) {
+    //     if(users[index].id == id){
+    //       users[index].deviceId = deviceId
+    //       setUserdeviceId(deviceId)
+    //     }
+    //   }
+    // }
     setselectedUser(id);
     setChatComponent(true);
   }
-  const setNotification = () => {
+  const setNotification = (noti) => {
     // Notifications.schduleNotification(date);
-    Notifications.schduleNotification(new Date(Date.now() + 5 * 1000));
+    Notifications.schduleNotification(new Date(Date.now()), noti);
   };
-  useEffect(() => {
-    getData();
-    // clearAsyncStorage()
-    socket.on('message', message => {
-      setMessageList(oldValue => [...oldValue, JSON.parse(message)]);
-    });
-  }, []);
+
   function sendMessage() {
     if (message == '' || message == null) {
       return;
@@ -107,7 +127,7 @@ export default function App() {
       socket.emit('message', {
         message: message,
         senderId: loginId,
-        recieverId: selectedUser,
+        recieverId: selectedUser
       });
     }
   }
@@ -129,7 +149,7 @@ export default function App() {
             onChangeText={e => {
               setPassword(e);
             }}></TextInput>
-          <TouchableOpacity style={style.loginButton} onPress={() => [login(),setNotification()]}>
+          <TouchableOpacity style={style.loginButton} onPress={() => login()}>
             <Text style={style.Logintext}>Login</Text>
           </TouchableOpacity>
         </View>

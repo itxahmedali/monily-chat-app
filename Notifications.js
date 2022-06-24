@@ -8,14 +8,12 @@ if (Platform.OS === 'android') {
 }
 class Notifications {
   constructor() {
-    console.log("helloe");
     PushNotification.configure({
       // (optional) Called when Token is generated (iOS and Android)
       onRegister: function (token) {
         // console.log('TOKEN:', token);
       },
       onNotification: function (notification) {
-        console.log('NOTIFICATION:', notification);
         notification.finish(PushNotificationIOS.FetchResult.NoData);
       },
       popInitialNotification: true,
@@ -43,11 +41,11 @@ class Notifications {
     });
   }
 
-  schduleNotification(date) {
+  schduleNotification(date, noti) {
     PushNotification.localNotificationSchedule({
       channelId: 'reminders',
       title: 'Message',
-      message: 'Hello world',
+      message: noti,
       date,
     });
   }
